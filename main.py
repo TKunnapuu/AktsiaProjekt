@@ -15,7 +15,6 @@ yf.pdr_override() # <== that's all it takes :-)
 data = pdr.get_data_yahoo("AAPL", start="2020-01-01", end="2020-10-29").to_csv("info.csv")
 
 
-
 print(data)
 root = tk.Tk()
 
@@ -55,7 +54,9 @@ df1 = DataFrame(data1,columns=["Päevad","Hinnad"])
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 ax.plot(päevad,hinnad,color ="r")
-graafik = FigureCanvasTkAgg(fig, root)
+ax.set_xticks([])
+
+graafik = FigureCanvasTkAgg(fig, frame1)
 graafik.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
 
