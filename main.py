@@ -6,22 +6,116 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 
 
-yf.pdr_override() # <== that's all it takes :-)
+def onClick(event):
+    print("Tere")
 
-# download dataframe
-data = pdr.get_data_yahoo("AAPL", start="2020-01-01", end="2020-10-29").to_csv("info.csv")
+def salvesta(event):
+    print("Head aega")
+    vaadeldavAktsia = sv.get()
+    frame1.configure(text = vaadeldavAktsia)
+    vahetaGraafik(vaadeldavAktsia)
+    print(vaadeldavAktsia)
+    raam.focus_set()
+
+def vahetaGraafik(vaadeldavAktsia):
+    print(variable.get())
+    täna = datetime.today()
+    period = ""
+    interval = ""
+    if(variable.get() == "Päev"):
+        period = "1d"
+        interval = "15m"
+    elif(variable.get()== "Nädal"):
+        period = "5d"
+        interval = "30m"
+    elif(variable.get()=="Kuu"):
+        period = "1mo"
+        interval = "90m"
+    elif(variable.get()=="Aasta"):
+        period = "1y"
+        interval = "5d"
+    yf.pdr_override()
+
+    data = yf.download(  # or pdr.get_data_yahoo(...
+        # tickers list or string as well
+        tickers = vaadeldavAktsia,
+
+        # use "period" instead of start/end
+        # valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+        # (optional, default is '1mo')
+        period=period,
+
+        # fetch data by interval (including intraday if period < 60 days)
+        # valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+        # (optional, default is '1d')
+        interval=interval,
+
+        # group by ticker (to access via data['SPY'])
+        # (optional, default is 'column')
+        group_by='ticker',
+
+        # adjust all OHLC automatically
+        # (optional, default is False)
+        auto_adjust=True,
+
+        # download pre/post regular market hours data
+        # (optional, default is False)
+        prepost=False,
+
+        # use threads for mass downloading? (True/False/Integer)
+        # (optional, default is True)
+        threads=True,
+
+        # proxy URL scheme use use when downloading?
+        # (optional, default is None)
+        proxy=None
+    ).to_csv("info.csv")
+    f = open("info.csv")
+    aktsiaInfo = []
+
+    for line in f:
+        info = line.strip().split(",")
+        aktsiaInfo.append(info)
+
+    print(aktsiaInfo)
+
+    päevad = []
+    hinnad = []
+
+    aktsiaInfo.pop(0)
+
+    for p in aktsiaInfo:
+        päevad.append(p[0])
+        hinnad.append(round(float(p[4]), 5))
+
+    print(päevad)
+    print(hinnad)
+
+    data1 = {"Päevad": päevad,
+             "Hinnad": hinnad}
+
+    df1 = DataFrame(data1, columns=["Päevad", "Hinnad"])
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(päevad, hinnad, color="r")
+    plt.tight_layout()
+
+    ax.set_xticks([])
+    for widget in frame1.winfo_children():
+        widget.destroy()
+    graafik = FigureCanvasTkAgg(fig, frame1)
+    graafik.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
 
-print(data)
 raam = tk.Tk()
 
 raam.geometry("1300x800")
 raam.pack_propagate(0)
 raam.resizable(0, 0)
-# This is the frame for the Treeview
-
 frame1 = tk.LabelFrame(raam, text="AAPL data")
 frame1.place(x=300, y=100, height=350, width=750)
 frame2 = tk.LabelFrame(raam, text="Lisainfo")
@@ -30,48 +124,21 @@ frame3 = tk.LabelFrame(raam, text="Aktsiad")
 frame3.place(x=1050,y=0,height = 1300, width = 250)
 
 variable = tk.StringVar(raam)
-variable.set("Päev") # default value
+variable.set("Päev")
 
 w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta")
 w.place(x=350, y = 60)
 
-l1 = tk.Entry(frame3,width = "200").pack()
+sv = tk.StringVar()
+
+l1 = tk.Entry(frame3,textvariable = sv ,width = "200")
+l1.bind("<Button-1>", onClick)
+l1.bind("<Return>", salvesta)
+l1.pack()
+
+
 l2 = tk.Entry(frame3,width= "200").pack()
-f= open("info.csv")
-aktsiaInfo = []
 
-for line in f:
-    info = line.strip().split(",")
-    aktsiaInfo.append(info)
-
-print(aktsiaInfo)
-
-päevad = []
-hinnad = []
-
-aktsiaInfo.pop(0)
-
-for p in aktsiaInfo:
-    päevad.append(p[0])
-    hinnad.append(round(float(p[4]),5))
-
-print(päevad)
-print(hinnad)
-
-data1 = {"Päevad": päevad,
-         "Hinnad": hinnad}
-
-df1 = DataFrame(data1,columns=["Päevad","Hinnad"])
-
-fig = plt.figure()
-ax = fig.add_subplot(1,1,1)
-ax.plot(päevad,hinnad,color ="r")
-plt.tight_layout()
-
-ax.set_xticks([])
-
-graafik = FigureCanvasTkAgg(fig, frame1)
-graafik.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
 
 raam.mainloop()
