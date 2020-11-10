@@ -14,7 +14,7 @@ def onClick(event):
 
 def salvesta(event):
     print("Head aega")
-    vaadeldavAktsia = sv.get()
+    vaadeldavAktsia = event.widget.get()
     frame1.configure(text = vaadeldavAktsia)
     vahetaGraafik(vaadeldavAktsia)
     print(vaadeldavAktsia)
@@ -99,12 +99,11 @@ def vahetaGraafik(vaadeldavAktsia):
 
     df1 = DataFrame(data1, columns=["Päevad", "Hinnad"])
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(15,2))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(päevad, hinnad, color="r")
-    plt.tight_layout()
-
-    ax.set_xticks([])
+    plt.grid()
+    ax.set_xticks(päevad)
     for widget in frame1.winfo_children():
         widget.destroy()
     graafik = FigureCanvasTkAgg(fig, frame1)
@@ -114,6 +113,7 @@ def vahetaGraafik(vaadeldavAktsia):
 raam = tk.Tk()
 
 raam.geometry("1300x800")
+raam.title("Aktsia projekt")
 raam.pack_propagate(0)
 raam.resizable(0, 0)
 frame1 = tk.LabelFrame(raam, text="AAPL data")
@@ -129,15 +129,32 @@ variable.set("Päev")
 w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta")
 w.place(x=350, y = 60)
 
-sv = tk.StringVar()
-
-l1 = tk.Entry(frame3,textvariable = sv ,width = "200")
-l1.bind("<Button-1>", onClick)
-l1.bind("<Return>", salvesta)
-l1.pack()
 
 
-l2 = tk.Entry(frame3,width= "200").pack()
+entries = []
+
+for i in range(25):
+    l = tk.Entry(frame3)
+    l.bind("<Button-1>", onClick)
+    l.bind("<Return>", salvesta)
+    entries.append(l)
+    l.grid(row=i, column=0, pady=5)
+
+
+#for el in lx:
+#    el = tk.Entry(frame3,textvariable = svx[c] ,width = "200")
+#    el.bind("<Button-1>", onClick)
+#    el.bind("<Return>", salvesta)
+#    el.pack()
+#    c+=1
+
+
+    #l1 = tk.Entry(frame3,textvariable = sv ,width = "200")
+    #l1.bind("<Button-1>", onClick)
+    #l1.bind("<Return>", salvesta)
+    #l1.pack()
+
+
 
 
 
