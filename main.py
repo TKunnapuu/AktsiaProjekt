@@ -161,6 +161,6 @@ for i in range(25):
     var.set(f.readline().strip())
     l.grid(row=i, column=0, pady=5)
 
-
+f.close()
 
 raam.mainloop()
