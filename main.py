@@ -10,18 +10,32 @@ from datetime import datetime, timedelta
 
 
 def onClick(event):
-    print("Tere")
+    aktsia = event.widget.get()
+    if(len(aktsia) < 1):
+        print("klikkasid tühja")
+    elif aktsia != frame1.cget("text"):
+        print("klikkasid", aktsia)
+        vaadeldavAktsia = aktsia
+        vahetaGraafik(vaadeldavAktsia)
+
+def caps(event):
+    entryStringVars[entries.index(event.widget)].set(event.widget.get().upper())
+
+def ajavahetus(event):
+    print("Vahetasid ajavahemiku")
+    print("Hetkel vaatan:",frame1.cget("text"))
+    vahetaGraafik(frame1.cget("text"))
 
 def salvesta(event):
     print("Head aega")
     vaadeldavAktsia = event.widget.get()
-    frame1.configure(text = vaadeldavAktsia)
     vahetaGraafik(vaadeldavAktsia)
     print(vaadeldavAktsia)
     raam.focus_set()
 
 def vahetaGraafik(vaadeldavAktsia):
     print(variable.get())
+    frame1.configure(text = vaadeldavAktsia)
     täna = datetime.today()
     period = ""
     interval = ""
@@ -126,35 +140,26 @@ frame3.place(x=1050,y=0,height = 1300, width = 250)
 variable = tk.StringVar(raam)
 variable.set("Päev")
 
-w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta")
+
+w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta", command=ajavahetus)
 w.place(x=350, y = 60)
 
 
 
 entries = []
+entryStringVars = []
+f = open("nimekiri.txt")
 
 for i in range(25):
-    l = tk.Entry(frame3)
+    var = tk.StringVar()
+    l = tk.Entry(frame3, textvariable = var)
     l.bind("<Button-1>", onClick)
     l.bind("<Return>", salvesta)
+    l.bind("<KeyRelease>", caps)
     entries.append(l)
+    entryStringVars.append(var)
+    var.set(f.readline().strip())
     l.grid(row=i, column=0, pady=5)
-
-
-#for el in lx:
-#    el = tk.Entry(frame3,textvariable = svx[c] ,width = "200")
-#    el.bind("<Button-1>", onClick)
-#    el.bind("<Return>", salvesta)
-#    el.pack()
-#    c+=1
-
-
-    #l1 = tk.Entry(frame3,textvariable = sv ,width = "200")
-    #l1.bind("<Button-1>", onClick)
-    #l1.bind("<Return>", salvesta)
-    #l1.pack()
-
-
 
 
 
