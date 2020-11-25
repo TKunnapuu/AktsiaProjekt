@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import tkinter.font as tkFont
 
 # esimese aktsia kuvamine programmi käivitudes
 # x-telg korda
@@ -57,6 +58,15 @@ def salvesta(event):
 def vahetaGraafik(vaadeldavAktsia):
     print(variable.get())
     frame1.configure(text=vaadeldavAktsia)
+    frame2.configure(text=vaadeldavAktsia)
+
+    aktsia = yf.Ticker(vaadeldavAktsia)
+
+    an.config(text = aktsia.get_info()["shortName"])
+    hind = aktsia.get_info()["lastMarket"]
+    if hind == None:
+        hind = aktsia.get_info()["previousClose"]
+    ah.config(text = hind)
     täna = datetime.today()
     period = ""
     interval = ""
@@ -73,6 +83,8 @@ def vahetaGraafik(vaadeldavAktsia):
         period = "1y"
         interval = "5d"
     yf.pdr_override()
+
+
 
     data = yf.download(  # or pdr.get_data_yahoo(...
         # tickers list or string as well
@@ -176,8 +188,19 @@ raam.pack_propagate(0)
 raam.resizable(0, 0)
 frame1 = tk.LabelFrame(raam, text="AAPL data")
 frame1.place(x=300, y=100, height=350, width=750)
+
+
+#Lisainfo akna sisu
 frame2 = tk.LabelFrame(raam, text="Lisainfo")
 frame2.place(height=1300, width=300)
+
+an = tk.Label(frame2 ,text = "", font = tkFont.Font(size = 15))
+ah = tk.Label(frame2 ,text = 0.0, font = tkFont.Font(size = 20))
+
+an.grid(row = 0,column = 0, sticky = "W",padx = 5, pady = 5)
+ah.grid(row = 1,column = 0, sticky = "W",padx = 5, pady = 5)
+###
+
 frame3 = tk.LabelFrame(raam, text="Aktsiad")
 frame3.place(x=1050, y=0, height=1300, width=250)
 
@@ -189,8 +212,10 @@ w.place(x=350, y=60)
 
 entries = []
 entryStringVars = []
-f = open("nimekiri.txt")
 
+#Nimekirja laadimine ja esimese aktsia kuvamine
+f = open("nimekiri.txt")
+vaadeldavAktsia =  ""
 for i in range(25):
     var = tk.StringVar()
     l = tk.Entry(frame3, textvariable=var)
@@ -200,8 +225,12 @@ for i in range(25):
     entries.append(l)
     entryStringVars.append(var)
     var.set(f.readline().strip())
+    if(len(vaadeldavAktsia) == 0):
+        vaadeldavAktsia = var.get()
     l.grid(row=i, column=0, pady=5)
 
+if(len(vaadeldavAktsia)) != 0:
+    vahetaGraafik(vaadeldavAktsia)
 f.close()
 
 raam.mainloop()

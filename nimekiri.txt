@@ -1,6 +1,6 @@
 ATVI
 GOOG
-
+CRSR
 AAPL
 
 
