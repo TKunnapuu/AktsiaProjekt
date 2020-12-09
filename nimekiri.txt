@@ -2,7 +2,7 @@ ATVI
 GOOG
 CRSR
 AAPL
-
+MSFT
 
 
 
