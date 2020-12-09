@@ -9,14 +9,20 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import tkinter.font as tkFont
 
-# esimese aktsia kuvamine programmi käivitudes
-# x-telg korda
-# informatsiooni juurde
-# kujundus ilusamaks
-# kood korda
-# info automaatne uuendamine
+# x-telg korda nädal kuu aasta
+
+# Kontroll kas aktsiaturg on lahti
+
+# informatsiooni juurde vasakule mcap  pe  200dayavg dividend pricehint
+
+# graafiku joon roheline/punane
+
+# Aja nupud
+
 # alerti tegemine
-# hiir graafikul funktsionaalsus
+
+# info automaatne uuendamine
+
 
 
 def onClick(event):
@@ -41,7 +47,7 @@ def ajavahetus(event):
 
 def salvesta(event):
     vaadeldavAktsia = event.widget.get()
-    f = open("nimekiri.txt","w")
+    f = open("nimekiri.txt", "w")
 
     for u in range(0,len(entryStringVars)):
         f.write(entryStringVars[u].get()+"\n")
@@ -63,6 +69,7 @@ def vahetaGraafik(vaadeldavAktsia):
     aktsia = yf.Ticker(vaadeldavAktsia)
 
     an.config(text = aktsia.get_info()["shortName"])
+    amc.config(text = aktsia.get_info()["marketCap"])
 
 
     täna = datetime.today()
@@ -99,6 +106,12 @@ def vahetaGraafik(vaadeldavAktsia):
         info = line.strip().split(",")
         aktsiaInfo.append(info)
 
+    for a in aktsia.get_info():
+        print(a)
+
+    print(aktsia.get_info()["morningStarOverallRating"])
+    print(aktsia.get_recommendations())
+    print(aktsia.get_recommendations())
     f.close()
 
     päevad = []
@@ -153,8 +166,9 @@ def vahetaGraafik(vaadeldavAktsia):
 
     df1 = DataFrame(data1, columns=["Päevad", "Hinnad"])
 
-    fig = plt.figure(figsize=(15, 2))
+    fig = plt.figure(figsize=(20, 4))
     plt.margins(x=0)
+
     ax = fig.add_subplot(1, 1, 1)
 
     #Tee x telg
@@ -176,13 +190,26 @@ def vahetaGraafik(vaadeldavAktsia):
 
 
     if (variable.get() == "Päev"):
+
+        for i in range(9, 16, 1):
+            for j in range(0, 59):
+                if j < 10:
+                    j = str(0) + str(j)
+                if i == 9 and int(j) < 30:
+                    print("")
+                elif i == 9:
+                    xteljed.append("0" + str(i) + ":" + str(j))
+                else:
+                    xteljed.append(str(i) + ":" + str(j))
         for i in range(len(xteljed)):
             xväärtused.append(aktsia.get_info()["previousClose"])
         ax.plot(xteljed,xväärtused)
-    #else:  #TODO
-    #    for i in range(len(xteljed)):
-    #        xväärtused.append(hinnad[1])
-    #    ax.plot(xteljed,xväärtused)
+
+    else:
+        for i in range(len(kohandatud_päevad)):
+            xväärtused.append(hinnad[1])
+        ax.plot(kohandatud_päevad,xväärtused)
+
 
     ax.plot(kohandatud_päevad, hinnad, color="r")
 
@@ -203,12 +230,15 @@ def vahetaGraafik(vaadeldavAktsia):
 
 raam = tk.Tk()
 
-raam.geometry("1300x800")
+raam.geometry("1350x550")
 raam.title("Aktsia projekt")
 raam.pack_propagate(0)
 raam.resizable(0, 0)
+
+#Graafiku aken
 frame1 = tk.LabelFrame(raam, text="AAPL data")
-frame1.place(x=300, y=100, height=350, width=750)
+frame1.place(x=300, y=0, height=450, width=850)
+
 
 
 #Lisainfo akna sisu
@@ -220,22 +250,29 @@ ah = tk.Label(frame2 ,text = 0.0, font = tkFont.Font(size = 18))
 ah1 = tk.Label(frame2, text= "("+str(0.0)+"%)", font = tkFont.Font(size = 18))
 ah2 = tk.Label(frame2, text= "("+str(0.0)+"%)", font = tkFont.Font(size = 18))
 
+amc = tk.Label(frame2 ,text = 0.0, font = tkFont.Font(size = 18))
+
 
 an.grid(row = 0, column = 0, columnspan = 3, sticky = tk.W,padx = 5, pady = 5)
 ah.grid(row = 1, column = 0, sticky = tk.W,padx = 5, pady = 5)
 ah1.grid(row = 1, column = 1 ,sticky = tk.W ,padx = 5, pady= 5)
 ah2.grid(row = 1, column = 2 ,sticky = tk.W ,padx = 5, pady= 5)
 
+amc.grid(row = 2, column = 0, sticky = tk.W ,padx = 5, pady = 5)
+
 ###
 
 frame3 = tk.LabelFrame(raam, text="Aktsiad")
-frame3.place(x=1050, y=0, height=1300, width=250)
+frame3.place(x=1150, y=0, height=1300, width=200)
 
 variable = tk.StringVar(raam)
 variable.set("Päev")
 
+
+#
+
 w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta", command=ajavahetus)
-w.place(x=350, y=60)
+w.place(x=350, y=455)
 
 entries = []
 entryStringVars = []
@@ -243,7 +280,7 @@ entryStringVars = []
 #Nimekirja laadimine ja esimese aktsia kuvamine
 f = open("nimekiri.txt")
 vaadeldavAktsia =  ""
-for i in range(25):
+for i in range(14):
     var = tk.StringVar()
     l = tk.Entry(frame3, textvariable=var)
     l.bind("<Button-1>", onClick)
