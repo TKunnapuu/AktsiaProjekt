@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import tkinter.font as tkFont
 
+
 # x-telg korda nädal kuu aasta
 
 # Kontroll kas aktsiaturg on lahti
@@ -24,10 +25,9 @@ import tkinter.font as tkFont
 # info automaatne uuendamine
 
 
-
 def onClick(event):
     aktsia = event.widget.get()
-    if (len(aktsia) < 1):
+    if len(aktsia) < 1:
         print("klikkasid tühja")
     elif aktsia != frame1.cget("text"):
         print("klikkasid", aktsia)
@@ -39,9 +39,10 @@ def caps(event):
     entryStringVars[entries.index(event.widget)].set(event.widget.get().upper())
 
 
-def ajavahetus(event):
+def ajavahetus(aeg):
     print("Vahetasid ajavahemiku")
     print("Hetkel vaatan:", frame1.cget("text"))
+    variable.set(aeg)
     vahetaGraafik(frame1.cget("text"))
 
 
@@ -49,11 +50,11 @@ def salvesta(event):
     vaadeldavAktsia = event.widget.get()
     f = open("nimekiri.txt", "w")
 
-    for u in range(0,len(entryStringVars)):
-        f.write(entryStringVars[u].get()+"\n")
+    for u in range(0, len(entryStringVars)):
+        f.write(entryStringVars[u].get() + "\n")
     f.close()
 
-    if (len(vaadeldavAktsia) < 1):
+    if len(vaadeldavAktsia) < 1:
         print("Tühi")
     else:
         vahetaGraafik(vaadeldavAktsia)
@@ -68,23 +69,43 @@ def vahetaGraafik(vaadeldavAktsia):
 
     aktsia = yf.Ticker(vaadeldavAktsia)
 
-    an.config(text = aktsia.get_info()["shortName"])
-    amc.config(text = aktsia.get_info()["marketCap"])
+    an.config(text=aktsia.get_info()["shortName"])
+
+    amcv = aktsia.get_info()["marketCap"]
+    if amcv < 1000000000:
+        amcv = str(round(amcv / 1000000, 2)) + " M"
+    elif amcv < 1000000000000:
+        amcv = str(round(amcv / 1000000000, 2)) + "B"
+    elif amcv < 1000000000000000:
+        amcv = str(round(amcv / 1000000000000, 2)) + "T"
+
+    #for mm in aktsia.get_info():
+    #   print(mm)
+
+    amc1.config(text=amcv)
+
+    if "trailingPE" in aktsia.get_info():
+        ape1.config(text=round(float(aktsia.get_info()["trailingPE"]), 1))
+    else:
+        try:
+            ape1.config(text=round(float(aktsia.get_info()["forwardPE"]), 1))
+        except:
+            ape1.config(text="-")
 
 
     täna = datetime.today()
     period = ""
     interval = ""
-    if (variable.get() == "Päev"):
+    if variable.get() == "1P":
         period = "1d"
         interval = "2m"
-    elif (variable.get() == "Nädal"):
+    elif variable.get() == "5P":
         period = "5d"
-        interval = "15m"
-    elif (variable.get() == "Kuu"):
+        interval = "5m"
+    elif variable.get() == "1K":
         period = "1mo"
-        interval = "60m"
-    elif (variable.get() == "Aasta"):
+        interval = "30m"
+    elif variable.get() == "1A":
         period = "1y"
         interval = "1d"
     yf.pdr_override()
@@ -105,13 +126,6 @@ def vahetaGraafik(vaadeldavAktsia):
     for line in f:
         info = line.strip().split(",")
         aktsiaInfo.append(info)
-
-    for a in aktsia.get_info():
-        print(a)
-
-    print(aktsia.get_info()["morningStarOverallRating"])
-    print(aktsia.get_recommendations())
-    print(aktsia.get_recommendations())
     f.close()
 
     päevad = []
@@ -128,104 +142,103 @@ def vahetaGraafik(vaadeldavAktsia):
 
     kohandatud_päevad = []
 
-    if (variable.get() == "Päev"):  # X telje väärtuste loomine
+    if variable.get() == "1P":  # X telje väärtuste loomine
         for el in päevad:
             kohandatud_päevad.append((el.split(" ")[1]).split("-")[0][:-3])
         hind = hinnad[-1]
         openHind = aktsia.get_info()["previousClose"]
+    elif variable.get() == "5P":
+        tp = datetime.today().weekday()
+        nädalapäevad = ["Esmaspäev", "Teisipäev", "Kolmapäev", "Neljapäev", "Reede"]
+        for i in range(tp):
+            nädalapäevad.append(nädalapäevad.pop(0))
+
+        print(nädalapäevad)
+        for el in päevad:
+            if el.split(" ")[1] == "09:30:00-05:00":
+                el = nädalapäevad.pop(0)
+            kohandatud_päevad.append(el)
+        hind = hinnad[-1]
+        openHind = hinnad[0]
     else:
-        #Ajutine
+        # Ajutine
         kohandatud_päevad = päevad
         hind = hinnad[-1]
-        openHind = hinnad[1]
-
-       # elif (variable.get() == "Nädal"):
-       #     for el in päevad:
-       #         el = el.split(" ")[1]
-       # elif (variable.get() == "Kuu"):
-       #     for el in päevad:
-       #         el = el.split(" ")[1]
-       # elif (variable.get() == "Aasta"):
-       #     for el in päevad:
-       #         el = el.split(" ")[1]
+        openHind = hinnad[0]
 
 
 
-
-    ah.config(text=round(hind,2))
-    ah1v = round(hind - openHind,2)
+    ah.config(text=round(hind, 2))
+    ah1v = round(hind - openHind, 2)
     if ah1v < 0:
-        ah1.config(text=round(hind - openHind, 2), fg = "red")
-        ah2.config(text="(" + str(round(round(hind - openHind, 2) / hind * 100, 2)) + "%)",fg = "red")
+        ah1.config(text=round(hind - openHind, 2), fg="red")
+        ah2.config(text="(" + str(round(round(hind - openHind, 2) / hind * 100, 2)) + "%)", fg="red")
     else:
-        ah1.config(text=round(hind - openHind,2),fg = "green")
-        ah2.config(text="("+str(round(round(hind - openHind,2)/hind*100,2))+"%)", fg = "green")
-
-    data1 = {"Päevad": kohandatud_päevad,
-             "Hinnad": hinnad}
-
-    df1 = DataFrame(data1, columns=["Päevad", "Hinnad"])
+        ah1.config(text=round(hind - openHind, 2), fg="green")
+        ah2.config(text="(" + str(round(round(hind - openHind, 2) / hind * 100, 2)) + "%)", fg="green")
 
     fig = plt.figure(figsize=(20, 4))
+    fig.patch.set_facecolor('#F0F0F0')
     plt.margins(x=0)
 
-    ax = fig.add_subplot(1, 1, 1)
+    ax = plt.subplot()
 
-    #Tee x telg
+    # Tee x telg
     xteljed = []
-    for i in range(9,16,1):
-        for j in range(0,59):
-            if j < 10:
-                j = str(0)+str(j)
-            if i == 9 and int(j) < 30:
-                print("")
-            elif i == 9:
-                xteljed.append("0"+str(i)+":"+str(j))
-            else:
-                xteljed.append(str(i)+":"+str(j))
-
-
     xväärtused = []
 
-
-
-    if (variable.get() == "Päev"):
-
+    if variable.get() == "1P":
         for i in range(9, 16, 1):
             for j in range(0, 59):
                 if j < 10:
                     j = str(0) + str(j)
-                if i == 9 and int(j) < 30:
-                    print("")
-                elif i == 9:
+                if i == 9 and int(j) >= 30:
                     xteljed.append("0" + str(i) + ":" + str(j))
-                else:
+                elif i != 9:
                     xteljed.append(str(i) + ":" + str(j))
         for i in range(len(xteljed)):
             xväärtused.append(aktsia.get_info()["previousClose"])
-        ax.plot(xteljed,xväärtused)
+        ax.plot(xteljed, xväärtused)
+        print("xteljed: ", xteljed)
+        print("xväärtused: ", xväärtused)
+    elif variable.get() == "5P":
+        for i in range(len(kohandatud_päevad)):
+            xväärtused.append(hinnad[0])
+            print(kohandatud_päevad[i])
+        ax.plot(kohandatud_päevad, xväärtused)
 
+        print("xteljed: ", xteljed)
+        print("xväärtused: ", xväärtused)
     else:
         for i in range(len(kohandatud_päevad)):
-            xväärtused.append(hinnad[1])
-        ax.plot(kohandatud_päevad,xväärtused)
+            xväärtused.append(hinnad[0])
+        ax.plot(kohandatud_päevad, xväärtused)
+        print("xteljed: ", kohandatud_päevad)
+        print("xväärtused: ", xväärtused)
 
+    ax.plot(kohandatud_päevad, hinnad, color="g")
 
-    ax.plot(kohandatud_päevad, hinnad, color="r")
+    madalad_hinnad = []
+    for v in hinnad:
+        if v < openHind:
+            madalad_hinnad.append(v)
+        else:
+            madalad_hinnad.append("")
 
     plt.grid()
-    if (variable.get() == "Päev"):
+    if variable.get() == "1P":
         ax.set_xticks(["10:00", "12:00", "14:00"])
-
+    elif variable.get() == "5P":
+        ax.set_xticks(["Esmaspäev","Teisipäev","Kolmapäev","Neljapäev","Reede"])
     else:
         ax.set_xticks([])
 
     for widget in frame1.winfo_children():
         widget.destroy()
+
     graafik = FigureCanvasTkAgg(fig, frame1)
+
     graafik.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-
-
 
 
 raam = tk.Tk()
@@ -235,51 +248,78 @@ raam.title("Aktsia projekt")
 raam.pack_propagate(0)
 raam.resizable(0, 0)
 
-#Graafiku aken
+frames = []
+
+# Graafiku aken
 frame1 = tk.LabelFrame(raam, text="AAPL data")
 frame1.place(x=300, y=0, height=450, width=850)
 
+frames.append(frame1)
 
-
-#Lisainfo akna sisu
+# Lisainfo akna sisu
 frame2 = tk.LabelFrame(raam, text="Lisainfo")
 frame2.place(height=1300, width=300)
+frames.append(frame2)
 
-an = tk.Label(frame2 ,text = "", font = tkFont.Font(size = 15))
-ah = tk.Label(frame2 ,text = 0.0, font = tkFont.Font(size = 18))
-ah1 = tk.Label(frame2, text= "("+str(0.0)+"%)", font = tkFont.Font(size = 18))
-ah2 = tk.Label(frame2, text= "("+str(0.0)+"%)", font = tkFont.Font(size = 18))
+an = tk.Label(frame2, text="", font=tkFont.Font(size=15))
+ah = tk.Label(frame2, text=0.0, font=tkFont.Font(size=18))
+ah1 = tk.Label(frame2, text="(" + str(0.0) + "%)", font=tkFont.Font(size=18))
+ah2 = tk.Label(frame2, text="(" + str(0.0) + "%)", font=tkFont.Font(size=18))
 
-amc = tk.Label(frame2 ,text = 0.0, font = tkFont.Font(size = 18))
+amc = tk.Label(frame2, text="Turukapital", font=tkFont.Font(size=15))
+amc1 = tk.Label(frame2, text=0.0, font=tkFont.Font(size=15))
 
+ape = tk.Label(frame2, text="P/E suhe", font=tkFont.Font(size=15))
+ape1 = tk.Label(frame2, text=0.0, font=tkFont.Font(size=15))
 
-an.grid(row = 0, column = 0, columnspan = 3, sticky = tk.W,padx = 5, pady = 5)
-ah.grid(row = 1, column = 0, sticky = tk.W,padx = 5, pady = 5)
-ah1.grid(row = 1, column = 1 ,sticky = tk.W ,padx = 5, pady= 5)
-ah2.grid(row = 1, column = 2 ,sticky = tk.W ,padx = 5, pady= 5)
+an.grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=5, pady=5)
+ah.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+ah1.grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
+ah2.grid(row=1, column=2, sticky=tk.W, padx=5, pady=5)
 
-amc.grid(row = 2, column = 0, sticky = tk.W ,padx = 5, pady = 5)
+amc.grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=5, pady=5)
+amc1.grid(row=2, column=2, columnspan=1, sticky=tk.W, padx=5, pady=5)
+
+ape.grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=5, pady=5)
+ape1.grid(row=3, column=2, columnspan=1, sticky=tk.W, padx=5, pady=5)
 
 ###
 
 frame3 = tk.LabelFrame(raam, text="Aktsiad")
 frame3.place(x=1150, y=0, height=1300, width=200)
+frames.append(frame3)
 
 variable = tk.StringVar(raam)
-variable.set("Päev")
+variable.set("1P")
 
+frame4 = tk.Frame(raam)
+frame4.place(x=300, y=455, height=100, width=850)
+frames.append(frame4)
 
 #
 
-w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta", command=ajavahetus)
-w.place(x=350, y=455)
+# w = tk.OptionMenu(raam, variable, "Päev", "Nädal", "Kuu", "Aasta", command=ajavahetus)
+# w.place(x=350, y=455)
+
+b1 = tk.Button(frame4, width=15, text="1 Päev", command=lambda: ajavahetus("1P"))
+b2 = tk.Button(frame4, width=15, text="5 Päeva", command=lambda: ajavahetus("5P"))
+b3 = tk.Button(frame4, width=15, text="1 Kuu", command=lambda: ajavahetus("1K"))
+b4 = tk.Button(frame4, width=15, text="1 Aasta", command=lambda: ajavahetus("1A"))
+
+b1.grid(row=0, column=0, padx=5, pady=5)
+b2.grid(row=0, column=1, padx=5, pady=5)
+b3.grid(row=0, column=2, padx=5, pady=5)
+b4.grid(row=0, column=3, padx=5, pady=5)
 
 entries = []
 entryStringVars = []
 
-#Nimekirja laadimine ja esimese aktsia kuvamine
+# for frame in frames:
+#    frame.config(bg = "black")
+
+# Nimekirja laadimine ja esimese aktsia kuvamine
 f = open("nimekiri.txt")
-vaadeldavAktsia =  ""
+vaadeldavAktsia = ""
 for i in range(14):
     var = tk.StringVar()
     l = tk.Entry(frame3, textvariable=var)
@@ -289,13 +329,12 @@ for i in range(14):
     entries.append(l)
     entryStringVars.append(var)
     var.set(f.readline().strip())
-    if(len(vaadeldavAktsia) == 0):
+    if len(vaadeldavAktsia) == 0:
         vaadeldavAktsia = var.get()
     l.grid(row=i, column=0, pady=5)
 
-if(len(vaadeldavAktsia)) != 0:
+if (len(vaadeldavAktsia)) != 0:
     vahetaGraafik(vaadeldavAktsia)
 f.close()
-
 
 raam.mainloop()
