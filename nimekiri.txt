@@ -1,11 +1,11 @@
 ATVI
 GOOG
-CRSR
+TSLA
 AAPL
 MSFT
 TSN
-
-
+F
+DIS
 
 
 
